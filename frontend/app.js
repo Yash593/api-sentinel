@@ -1,68 +1,113 @@
 const API_URL = "https://nodejs-2dd9-5000.prg1.zerops.app";
 
 async function loadDashboard() {
-
     try {
-
         const [apisResponse, incidentsResponse] = await Promise.all([
             fetch(`${API_URL}/api/apis`),
             fetch(`${API_URL}/api/incidents`)
         ]);
 
+        if (!apisResponse.ok || !incidentsResponse.ok) {
+            throw new Error("Backend request failed");
+        }
+
         const apiData = await apisResponse.json();
         const incidentData = await incidentsResponse.json();
 
-        renderApis(apiData.apis);
-        renderIncidents(incidentData.incidents);
+        renderApis(apiData.apis || []);
+        renderIncidents(incidentData.incidents || []);
+        updateStats(
+            apiData.apis || [],
+            incidentData.incidents || []
+        );
 
-        updateStats(apiData.apis, incidentData.incidents);
+        const status = document.querySelector(".status");
 
-        document.querySelector(".status").innerHTML =
-            `<span class="dot"></span> System Operational`;
+        if (status) {
+            status.innerHTML =
+                `<span class="dot"></span> System Operational`;
+        }
 
     } catch (error) {
+        console.error("Dashboard error:", error);
 
-        console.error(error);
+        const status = document.querySelector(".status");
 
-        document.querySelector(".status").innerHTML =
-            `<span class="dot" style="background:#ff6262"></span> Backend Offline`;
+        if (status) {
+            status.innerHTML =
+                `<span class="dot" style="background:#ff6262"></span> Backend Offline`;
+        }
     }
 }
 
-
 function updateStats(apis, incidents) {
+    const healthy = apis.filter(
+        api => api.status === "healthy"
+    ).length;
 
-    const healthy = apis.filter(api => api.status === "healthy").length;
+    const down = apis.filter(
+        api => api.status === "down"
+    ).length;
 
-    const down = apis.filter(api => api.status === "down").length;
+    const totalApis = document.getElementById("totalApis");
+    const healthyApis = document.getElementById("healthyApis");
+    const downApis = document.getElementById("downApis");
+    const incidentCount = document.getElementById("incidentCount");
 
-    document.getElementById("totalApis").textContent = apis.length;
+    if (totalApis) {
+        totalApis.textContent = apis.length;
+    }
 
-    document.getElementById("healthyApis").textContent = healthy;
+    if (healthyApis) {
+        healthyApis.textContent = healthy;
+    }
 
-    document.getElementById("downApis").textContent = down;
+    if (downApis) {
+        downApis.textContent = down;
+    }
 
-    document.getElementById("incidentCount").textContent =
-        incidents.length;
+    if (incidentCount) {
+        incidentCount.textContent = incidents.length;
+    }
 }
 
-
 function renderApis(apis) {
-
     const apiList = document.getElementById("apiList");
+
+    if (!apiList) return;
 
     apiList.innerHTML = "";
 
-    apis.forEach(api => {
+    if (apis.length === 0) {
+        apiList.innerHTML = `
+            <div class="incident">
+                <div class="incident-icon">!</div>
+                <div>
+                    <strong>No APIs configured</strong>
+                    <p>Add an API to start monitoring.</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
 
+    apis.forEach(api => {
         const statusClass =
-            api.status === "healthy" ? "healthy" : "down";
+            api.status === "healthy"
+                ? "healthy"
+                : "down";
 
         const statusText =
-            api.status === "healthy" ? "Healthy" : "Down";
+            api.status === "healthy"
+                ? "Healthy"
+                : api.status === "down"
+                    ? "Down"
+                    : "Unknown";
 
         const response =
-            api.responseTime
+            api.responseTime !== null &&
+            api.responseTime !== undefined &&
+            api.responseTime > 0
                 ? `${api.responseTime}ms`
                 : "--";
 
@@ -95,18 +140,18 @@ function renderApis(apis) {
     });
 }
 
-
 function renderIncidents(incidents) {
-
     const container = document.querySelector(".incident-list");
+
+    if (!container) return;
 
     container.innerHTML = "";
 
     if (incidents.length === 0) {
-
         container.innerHTML = `
             <div class="incident">
                 <div class="incident-icon">✓</div>
+
                 <div>
                     <strong>No incidents detected</strong>
                     <p>All monitored APIs are operating normally.</p>
@@ -118,7 +163,6 @@ function renderIncidents(incidents) {
     }
 
     incidents.slice(0, 5).forEach(incident => {
-
         const div = document.createElement("div");
 
         div.className = "incident";
@@ -145,36 +189,39 @@ function renderIncidents(incidents) {
     });
 }
 
-
 async function checkAllApis() {
-
     const button = document.getElementById("checkAllBtn");
+
+    if (!button) return;
 
     button.textContent = "Checking...";
     button.disabled = true;
 
     try {
+        const response = await fetch(
+            `${API_URL}/api/check-all`,
+            {
+                method: "POST"
+            }
+        );
 
-        await fetch(`${API_URL}/api/check-all`, {
-            method: "POST"
-        });
+        if (!response.ok) {
+            throw new Error("Check failed");
+        }
 
         await loadDashboard();
 
     } catch (error) {
-
-        console.error(error);
-
+        console.error("Check error:", error);
         alert("Unable to contact API Sentinel backend.");
-    }
 
-    button.textContent = "Check All APIs";
-    button.disabled = false;
+    } finally {
+        button.textContent = "Check All APIs";
+        button.disabled = false;
+    }
 }
 
-
 function formatTime(timestamp) {
-
     if (!timestamp) return "--";
 
     return new Date(timestamp).toLocaleTimeString([], {
@@ -183,24 +230,28 @@ function formatTime(timestamp) {
     });
 }
 
-
 function escapeHtml(value) {
-
     const div = document.createElement("div");
 
-    div.textContent = value;
+    div.textContent = value ?? "";
 
     return div.innerHTML;
 }
 
+const checkButton = document.getElementById("checkAllBtn");
 
-document
-    .getElementById("checkAllBtn")
-    .addEventListener("click", checkAllApis);
-
+if (checkButton) {
+    checkButton.addEventListener(
+        "click",
+        checkAllApis
+    );
+}
 
 // Initial load
 loadDashboard();
 
-// Refresh dashboard every 15 seconds
-setInterval(loadDashboard, 15000);
+// Refresh every 15 seconds
+setInterval(
+    loadDashboard,
+    15000
+);
