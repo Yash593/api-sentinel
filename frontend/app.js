@@ -1,72 +1,40 @@
-const API_URL =
-    "https://nodejs-2dd9-5000.prg1.zerops.app";
-
-
-// ======================================================
-// LOAD DASHBOARD
-// ======================================================
+const API_URL = "https://nodejs-2dd9-5000.prg1.zerops.app";
 
 async function loadDashboard() {
-
     try {
-
-        const [
-            apisResponse,
-            incidentsResponse
-        ] = await Promise.all([
+        const [apisResponse, incidentsResponse] = await Promise.all([
             fetch(`${API_URL}/api/apis`),
             fetch(`${API_URL}/api/incidents`)
         ]);
 
-        if (
-            !apisResponse.ok ||
-            !incidentsResponse.ok
-        ) {
-            throw new Error(
-                "Backend request failed"
-            );
+        if (!apisResponse.ok || !incidentsResponse.ok) {
+            throw new Error("Backend request failed");
         }
 
-        const apiData =
-            await apisResponse.json();
+        const apiData = await apisResponse.json();
+        const incidentData = await incidentsResponse.json();
 
-        const incidentData =
-            await incidentsResponse.json();
-
-        renderApis(
-            apiData.apis || []
-        );
-
-        renderIncidents(
-            incidentData.incidents || []
-        );
+        renderApis(apiData.apis || []);
+        renderIncidents(incidentData.incidents || []);
 
         updateStats(
             apiData.apis || [],
             incidentData.incidents || []
         );
 
-        const status =
-            document.querySelector(".status");
+        const status = document.querySelector(".status");
 
         if (status) {
-
             status.innerHTML =
                 `<span class="dot"></span> System Operational`;
         }
 
     } catch (error) {
+        console.error("Dashboard error:", error);
 
-        console.error(
-            "Dashboard error:",
-            error
-        );
-
-        const status =
-            document.querySelector(".status");
+        const status = document.querySelector(".status");
 
         if (status) {
-
             status.innerHTML =
                 `<span class="dot" style="background:#ff6262"></span> Backend Offline`;
         }
@@ -74,88 +42,46 @@ async function loadDashboard() {
 }
 
 
-// ======================================================
-// UPDATE DASHBOARD STATS
-// ======================================================
+function updateStats(apis, incidents) {
 
-function updateStats(
-    apis,
-    incidents
-) {
+    const healthy = apis.filter(
+        api => api.status === "healthy"
+    ).length;
 
-    const healthy =
-        apis.filter(
-            api => api.status === "healthy"
-        ).length;
+    const down = apis.filter(
+        api => api.status === "down"
+    ).length;
 
-    const down =
-        apis.filter(
-            api => api.status === "down"
-        ).length;
-
-
-    const totalApis =
-        document.getElementById(
-            "totalApis"
-        );
-
-    const healthyApis =
-        document.getElementById(
-            "healthyApis"
-        );
-
-    const downApis =
-        document.getElementById(
-            "downApis"
-        );
-
-    const incidentCount =
-        document.getElementById(
-            "incidentCount"
-        );
-
+    const totalApis = document.getElementById("totalApis");
+    const healthyApis = document.getElementById("healthyApis");
+    const downApis = document.getElementById("downApis");
+    const incidentCount = document.getElementById("incidentCount");
 
     if (totalApis) {
-
-        totalApis.textContent =
-            apis.length;
+        totalApis.textContent = apis.length;
     }
 
     if (healthyApis) {
-
-        healthyApis.textContent =
-            healthy;
+        healthyApis.textContent = healthy;
     }
 
     if (downApis) {
-
-        downApis.textContent =
-            down;
+        downApis.textContent = down;
     }
 
     if (incidentCount) {
-
-        incidentCount.textContent =
-            incidents.length;
+        incidentCount.textContent = incidents.length;
     }
 }
 
 
-// ======================================================
-// RENDER APIs
-// ======================================================
-
 function renderApis(apis) {
 
-    const apiList =
-        document.getElementById(
-            "apiList"
-        );
+    const apiList = document.getElementById("apiList");
 
     if (!apiList) return;
 
     apiList.innerHTML = "";
-
 
     if (apis.length === 0) {
 
@@ -164,13 +90,8 @@ function renderApis(apis) {
                 <div class="incident-icon">!</div>
 
                 <div>
-                    <strong>
-                        No APIs configured
-                    </strong>
-
-                    <p>
-                        Add an API to start monitoring.
-                    </p>
+                    <strong>No APIs configured</strong>
+                    <p>Add an API to start monitoring.</p>
                 </div>
             </div>
         `;
@@ -178,16 +99,12 @@ function renderApis(apis) {
         return;
     }
 
-
     apis.forEach(api => {
 
         const statusClass =
             api.status === "healthy"
                 ? "healthy"
-                : api.status === "down"
-                    ? "down"
-                    : "unknown";
-
+                : "down";
 
         const statusText =
             api.status === "healthy"
@@ -196,122 +113,63 @@ function renderApis(apis) {
                     ? "Down"
                     : "Unknown";
 
-
         const response =
             api.responseTime !== null &&
             api.responseTime !== undefined &&
             api.responseTime > 0
-
                 ? `${api.responseTime}ms`
-
                 : "--";
 
+        const card = document.createElement("div");
 
-        const card =
-            document.createElement(
-                "div"
-            );
-
-        card.className =
-            "api-card";
-
+        card.className = "api-card";
 
         card.innerHTML = `
-
             <div class="api-info">
 
-                <div class="api-icon">
-                    🌐
-                </div>
+                <div class="api-icon">🌐</div>
 
                 <div>
-
-                    <h4>
-                        ${escapeHtml(
-                            api.name
-                        )}
-                    </h4>
-
-                    <p>
-                        ${escapeHtml(
-                            api.url
-                        )}
-                    </p>
-
+                    <h4>${escapeHtml(api.name)}</h4>
+                    <p>${escapeHtml(api.url)}</p>
                 </div>
 
             </div>
 
-
             <div class="api-status ${statusClass}">
-
                 <span></span>
-
                 ${statusText}
-
             </div>
 
-
             <div class="response">
-
-                <strong>
-                    ${response}
-                </strong>
-
-                <small>
-                    Response
-                </small>
-
+                <strong>${response}</strong>
+                <small>Response</small>
             </div>
         `;
 
-
-        apiList.appendChild(
-            card
-        );
+        apiList.appendChild(card);
     });
 }
 
 
-// ======================================================
-// RENDER INCIDENTS
-// ======================================================
+function renderIncidents(incidents) {
 
-function renderIncidents(
-    incidents
-) {
-
-    const container =
-        document.querySelector(
-            ".incident-list"
-        );
+    const container = document.querySelector(".incident-list");
 
     if (!container) return;
 
     container.innerHTML = "";
 
-
     if (incidents.length === 0) {
 
         container.innerHTML = `
-
             <div class="incident">
 
-                <div class="incident-icon">
-                    ✓
-                </div>
+                <div class="incident-icon">✓</div>
 
                 <div>
-
-                    <strong>
-                        No incidents detected
-                    </strong>
-
-                    <p>
-                        All monitored APIs are
-                        operating normally.
-                    </p>
-
+                    <strong>No incidents detected</strong>
+                    <p>All monitored APIs are operating normally.</p>
                 </div>
 
             </div>
@@ -320,104 +178,62 @@ function renderIncidents(
         return;
     }
 
+    incidents.slice(0, 5).forEach(incident => {
 
-    incidents
-        .slice(0, 5)
-        .forEach(incident => {
+        const div = document.createElement("div");
 
-            const div =
-                document.createElement(
-                    "div"
-                );
+        div.className = "incident";
 
-            div.className =
-                "incident";
+        div.innerHTML = `
+            <div class="incident-icon">!</div>
 
+            <div>
+                <strong>
+                    ${escapeHtml(incident.apiName)}
+                </strong>
 
-            div.innerHTML = `
+                <p>
+                    ${escapeHtml(incident.message)}
+                </p>
+            </div>
 
-                <div class="incident-icon">
-                    !
-                </div>
+            <span>
+                ${formatTime(incident.timestamp)}
+            </span>
+        `;
 
-                <div>
-
-                    <strong>
-                        ${escapeHtml(
-                            incident.apiName
-                        )}
-                    </strong>
-
-                    <p>
-                        ${escapeHtml(
-                            incident.message
-                        )}
-                    </p>
-
-                </div>
-
-                <span>
-                    ${formatTime(
-                        incident.timestamp
-                    )}
-                </span>
-            `;
-
-
-            container.appendChild(
-                div
-            );
-        });
+        container.appendChild(div);
+    });
 }
 
 
-// ======================================================
-// CHECK ALL APIs
-// ======================================================
-
 async function checkAllApis() {
 
-    const button =
-        document.getElementById(
-            "checkAllBtn"
-        );
+    const button = document.getElementById("checkAllBtn");
 
     if (!button) return;
 
-
-    button.textContent =
-        "Checking...";
-
+    button.textContent = "Checking...";
     button.disabled = true;
-
 
     try {
 
-        const response =
-            await fetch(
-                `${API_URL}/api/check-all`,
-                {
-                    method: "POST"
-                }
-            );
-
+        const response = await fetch(
+            `${API_URL}/api/check-all`,
+            {
+                method: "POST"
+            }
+        );
 
         if (!response.ok) {
-
-            throw new Error(
-                "Check failed"
-            );
+            throw new Error("Check failed");
         }
-
 
         await loadDashboard();
 
     } catch (error) {
 
-        console.error(
-            "Check error:",
-            error
-        );
+        console.error("Check error:", error);
 
         alert(
             "Unable to contact API Sentinel backend."
@@ -425,848 +241,508 @@ async function checkAllApis() {
 
     } finally {
 
-        button.textContent =
-            "Check All APIs";
-
-        button.disabled =
-            false;
+        button.textContent = "Check All APIs";
+        button.disabled = false;
     }
 }
 
 
-// ======================================================
-// ADD API MODAL
-// ======================================================
+/* =====================================================
+   ADD API FEATURE
+   ===================================================== */
 
 function createAddApiModal() {
 
-    // Prevent creating the modal twice
+    if (document.getElementById("addApiModal")) {
+        return;
+    }
+
+    const modal = document.createElement("div");
+
+    modal.id = "addApiModal";
+
+    modal.innerHTML = `
+        <div class="add-api-overlay">
+
+            <div class="add-api-modal">
+
+                <div class="add-api-header">
+
+                    <div>
+                        <h2>Add API</h2>
+                        <p>Add an API endpoint to monitor.</p>
+                    </div>
+
+                    <button
+                        type="button"
+                        id="closeAddApi"
+                        class="close-add-api"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+                <form id="addApiForm">
+
+                    <div class="form-group">
+
+                        <label for="apiName">
+                            API Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="apiName"
+                            placeholder="Example: GitHub API"
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="apiUrl">
+                            API URL
+                        </label>
+
+                        <input
+                            type="url"
+                            id="apiUrl"
+                            placeholder="https://api.github.com"
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+                    <div
+                        id="addApiError"
+                        class="add-api-error"
+                    ></div>
+
+                    <div class="add-api-actions">
+
+                        <button
+                            type="button"
+                            id="cancelAddApi"
+                            class="cancel-api-btn"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            id="submitAddApi"
+                            class="submit-api-btn"
+                        >
+                            Add API
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    addModalStyles();
+
+    document
+        .getElementById("closeAddApi")
+        .addEventListener(
+            "click",
+            closeAddApiModal
+        );
+
+    document
+        .getElementById("cancelAddApi")
+        .addEventListener(
+            "click",
+            closeAddApiModal
+        );
+
+    document
+        .getElementById("addApiForm")
+        .addEventListener(
+            "submit",
+            addApi
+        );
+}
+
+
+function openAddApiModal() {
+
+    createAddApiModal();
+
+    const modal = document.getElementById(
+        "addApiModal"
+    );
+
+    modal.style.display = "flex";
+
+    document
+        .getElementById("apiName")
+        .focus();
+}
+
+
+function closeAddApiModal() {
+
+    const modal = document.getElementById(
+        "addApiModal"
+    );
+
+    if (!modal) return;
+
+    modal.style.display = "none";
+
+    const form = document.getElementById(
+        "addApiForm"
+    );
+
+    if (form) {
+        form.reset();
+    }
+
+    const error = document.getElementById(
+        "addApiError"
+    );
+
+    if (error) {
+        error.textContent = "";
+    }
+}
+
+
+async function addApi(event) {
+
+    event.preventDefault();
+
+    const nameInput = document.getElementById(
+        "apiName"
+    );
+
+    const urlInput = document.getElementById(
+        "apiUrl"
+    );
+
+    const errorBox = document.getElementById(
+        "addApiError"
+    );
+
+    const submitButton = document.getElementById(
+        "submitAddApi"
+    );
+
+    const name = nameInput.value.trim();
+
+    const url = urlInput.value.trim();
+
+    errorBox.textContent = "";
+
+    if (!name) {
+
+        errorBox.textContent =
+            "Please enter an API name.";
+
+        nameInput.focus();
+
+        return;
+    }
+
+    if (!url) {
+
+        errorBox.textContent =
+            "Please enter an API URL.";
+
+        urlInput.focus();
+
+        return;
+    }
+
+    let validUrl;
+
+    try {
+
+        validUrl = new URL(url);
+
+    } catch {
+
+        errorBox.textContent =
+            "Please enter a valid URL.";
+
+        urlInput.focus();
+
+        return;
+    }
+
+    if (
+        validUrl.protocol !== "http:" &&
+        validUrl.protocol !== "https:"
+    ) {
+
+        errorBox.textContent =
+            "URL must start with http:// or https://";
+
+        urlInput.focus();
+
+        return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Adding...";
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/api/apis`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    name: name,
+                    url: url
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error ||
+                data.message ||
+                "Failed to add API"
+            );
+        }
+
+        closeAddApiModal();
+
+        await loadDashboard();
+
+        alert("API added successfully!");
+
+    } catch (error) {
+
+        console.error(
+            "Add API error:",
+            error
+        );
+
+        errorBox.textContent =
+            error.message ||
+            "Unable to add API.";
+
+    } finally {
+
+        submitButton.disabled = false;
+        submitButton.textContent = "Add API";
+    }
+}
+
+
+/* =====================================================
+   MODAL STYLING
+   ===================================================== */
+
+function addModalStyles() {
+
     if (
         document.getElementById(
-            "addApiModal"
+            "add-api-modal-styles"
         )
     ) {
         return;
     }
 
+    const style = document.createElement("style");
 
-    const style =
-        document.createElement(
-            "style"
-        );
-
-
-    style.id =
-        "addApiModalStyles";
-
+    style.id = "add-api-modal-styles";
 
     style.textContent = `
 
         #addApiModal {
-
-            position: fixed;
-
-            inset: 0;
-
-            z-index: 9999;
-
             display: none;
-
-            align-items: center;
-
-            justify-content: center;
-
-            padding: 20px;
-
-            background:
-                rgba(0, 0, 0, 0.72);
-
-            backdrop-filter:
-                blur(5px);
         }
 
-
-        #addApiModal.open {
-
+        .add-api-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
             display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
         }
 
-
-        .add-api-dialog {
-
-            width:
-                min(460px, 100%);
-
-            background:
-                #111722;
-
-            border:
-                1px solid #273247;
-
-            border-radius:
-                16px;
-
-            padding:
-                24px;
-
-            box-shadow:
-                0 24px 80px
-                rgba(0, 0, 0, 0.45);
-
-            color:
-                #f5f7fb;
+        .add-api-modal {
+            width: 100%;
+            max-width: 500px;
+            background: #111722;
+            border: 1px solid #293246;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+            color: #ffffff;
         }
-
 
         .add-api-header {
-
-            display:
-                flex;
-
-            align-items:
-                center;
-
-            justify-content:
-                space-between;
-
-            margin-bottom:
-                20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
         }
 
-
-        .add-api-header h3 {
-
-            margin:
-                0;
-
-            font-size:
-                22px;
+        .add-api-header h2 {
+            margin: 0 0 7px 0;
+            font-size: 24px;
         }
 
-
-        .add-api-close {
-
-            border:
-                0;
-
-            background:
-                transparent;
-
-            color:
-                #9aa5b5;
-
-            font-size:
-                26px;
-
-            cursor:
-                pointer;
+        .add-api-header p {
+            margin: 0;
+            color: #8993a7;
+            font-size: 14px;
         }
 
-
-        .add-api-field {
-
-            margin-bottom:
-                16px;
+        .close-add-api {
+            background: transparent;
+            border: none;
+            color: #9aa4b8;
+            font-size: 30px;
+            cursor: pointer;
+            line-height: 1;
         }
 
-
-        .add-api-field label {
-
-            display:
-                block;
-
-            margin-bottom:
-                7px;
-
-            color:
-                #c7cfdb;
-
-            font-size:
-                14px;
+        .close-add-api:hover {
+            color: #ffffff;
         }
 
-
-        .add-api-field input {
-
-            width:
-                100%;
-
-            box-sizing:
-                border-box;
-
-            padding:
-                12px 13px;
-
-            border-radius:
-                9px;
-
-            border:
-                1px solid #303c51;
-
-            background:
-                #0a0f18;
-
-            color:
-                #ffffff;
-
-            outline:
-                none;
-
-            font:
-                inherit;
+        .form-group {
+            margin-bottom: 20px;
         }
 
-
-        .add-api-field input:focus {
-
-            border-color:
-                #3578ff;
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #dce2ed;
         }
 
+        .form-group input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 13px 14px;
+            border-radius: 9px;
+            border: 1px solid #30394c;
+            background: #0b1019;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #2878ff;
+            box-shadow: 0 0 0 2px rgba(40, 120, 255, 0.15);
+        }
+
+        .form-group input::placeholder {
+            color: #667085;
+        }
 
         .add-api-error {
-
-            display:
-                none;
-
-            margin:
-                10px 0 0;
-
-            color:
-                #ff7777;
-
-            font-size:
-                13px;
+            min-height: 20px;
+            margin-bottom: 12px;
+            color: #ff6262;
+            font-size: 13px;
         }
-
-
-        .add-api-success {
-
-            display:
-                none;
-
-            margin:
-                10px 0 0;
-
-            color:
-                #5ee58a;
-
-            font-size:
-                13px;
-        }
-
 
         .add-api-actions {
-
-            display:
-                flex;
-
-            justify-content:
-                flex-end;
-
-            gap:
-                10px;
-
-            margin-top:
-                22px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
         }
 
-
-        .add-api-actions button {
-
-            border-radius:
-                9px;
-
-            padding:
-                11px 16px;
-
-            cursor:
-                pointer;
-
-            font:
-                inherit;
+        .cancel-api-btn,
+        .submit-api-btn {
+            padding: 11px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
         }
 
-
-        #addApiCancelBtn {
-
-            border:
-                1px solid #303c51;
-
-            background:
-                transparent;
-
-            color:
-                #d4d9e2;
+        .cancel-api-btn {
+            background: #1a2130;
+            border: 1px solid #30394c;
+            color: #dce2ed;
         }
 
-
-        #addApiSubmitBtn {
-
-            border:
-                0;
-
-            background:
-                #2875f5;
-
-            color:
-                #ffffff;
+        .cancel-api-btn:hover {
+            background: #242c3b;
         }
 
-
-        #addApiSubmitBtn:disabled {
-
-            opacity:
-                0.6;
-
-            cursor:
-                wait;
+        .submit-api-btn {
+            background: #2878ff;
+            border: 1px solid #2878ff;
+            color: white;
         }
+
+        .submit-api-btn:hover {
+            background: #1d67df;
+        }
+
+        .submit-api-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
     `;
 
-
-    document.head.appendChild(
-        style
-    );
+    document.head.appendChild(style);
+}
 
 
-    const modal =
-        document.createElement(
-            "div"
-        );
+/* =====================================================
+   ADD API BUTTON
+   ===================================================== */
 
+const addApiButton = document.querySelector(
+    "#addApiBtn"
+);
 
-    modal.id =
-        "addApiModal";
+if (addApiButton) {
 
-
-    modal.innerHTML = `
-
-        <div
-            class="add-api-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="addApiTitle"
-        >
-
-            <div class="add-api-header">
-
-                <h3 id="addApiTitle">
-                    Add New API
-                </h3>
-
-                <button
-                    type="button"
-                    class="add-api-close"
-                    id="addApiCloseBtn"
-                    aria-label="Close"
-                >
-                    &times;
-                </button>
-
-            </div>
-
-
-            <form id="addApiForm">
-
-                <div class="add-api-field">
-
-                    <label for="addApiName">
-                        API Name
-                    </label>
-
-                    <input
-                        id="addApiName"
-                        name="name"
-                        type="text"
-                        placeholder="GitHub API"
-                        autocomplete="off"
-                        required
-                    >
-
-                </div>
-
-
-                <div class="add-api-field">
-
-                    <label for="addApiUrl">
-                        API URL
-                    </label>
-
-                    <input
-                        id="addApiUrl"
-                        name="url"
-                        type="url"
-                        placeholder="https://api.github.com"
-                        autocomplete="off"
-                        required
-                    >
-
-                </div>
-
-
-                <div
-                    class="add-api-error"
-                    id="addApiError"
-                ></div>
-
-
-                <div
-                    class="add-api-success"
-                    id="addApiSuccess"
-                >
-                    API added successfully.
-                </div>
-
-
-                <div class="add-api-actions">
-
-                    <button
-                        type="button"
-                        id="addApiCancelBtn"
-                    >
-                        Cancel
-                    </button>
-
-
-                    <button
-                        type="submit"
-                        id="addApiSubmitBtn"
-                    >
-                        Add API
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-    `;
-
-
-    document.body.appendChild(
-        modal
-    );
-
-
-    const form =
-        document.getElementById(
-            "addApiForm"
-        );
-
-
-    const errorBox =
-        document.getElementById(
-            "addApiError"
-        );
-
-
-    const successBox =
-        document.getElementById(
-            "addApiSuccess"
-        );
-
-
-    const submitButton =
-        document.getElementById(
-            "addApiSubmitBtn"
-        );
-
-
-    function closeModal() {
-
-        modal.classList.remove(
-            "open"
-        );
-
-        form.reset();
-
-        errorBox.textContent =
-            "";
-
-        errorBox.style.display =
-            "none";
-
-        successBox.style.display =
-            "none";
-    }
-
-
-    document
-        .getElementById(
-            "addApiCloseBtn"
-        )
-        .addEventListener(
-            "click",
-            closeModal
-        );
-
-
-    document
-        .getElementById(
-            "addApiCancelBtn"
-        )
-        .addEventListener(
-            "click",
-            closeModal
-        );
-
-
-    // Close when clicking outside
-    modal.addEventListener(
+    addApiButton.addEventListener(
         "click",
-        event => {
-
-            if (
-                event.target === modal
-            ) {
-                closeModal();
-            }
-        }
+        openAddApiModal
     );
 
+} else {
 
-    // Close using Escape key
-    document.addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key === "Escape" &&
-                modal.classList.contains(
-                    "open"
-                )
-            ) {
-                closeModal();
-            }
-        }
-    );
-
-
-    // Submit Add API form
-    form.addEventListener(
-        "submit",
-        async event => {
-
-            event.preventDefault();
-
-
-            const name =
-                document
-                    .getElementById(
-                        "addApiName"
-                    )
-                    .value
-                    .trim();
-
-
-            const url =
-                document
-                    .getElementById(
-                        "addApiUrl"
-                    )
-                    .value
-                    .trim();
-
-
-            errorBox.textContent =
-                "";
-
-            errorBox.style.display =
-                "none";
-
-            successBox.style.display =
-                "none";
-
-
-            // Validate name
-            if (!name) {
-
-                errorBox.textContent =
-                    "API name is required.";
-
-                errorBox.style.display =
-                    "block";
-
-                return;
-            }
-
-
-            // Validate URL
-            if (!url) {
-
-                errorBox.textContent =
-                    "API URL is required.";
-
-                errorBox.style.display =
-                    "block";
-
-                return;
-            }
-
-
-            // Parse URL
-            let parsedUrl;
-
-
-            try {
-
-                parsedUrl =
-                    new URL(url);
-
-            } catch {
-
-                errorBox.textContent =
-                    "Please enter a valid URL.";
-
-                errorBox.style.display =
-                    "block";
-
-                return;
-            }
-
-
-            // Only HTTP and HTTPS
-            if (
-                ![
-                    "http:",
-                    "https:"
-                ].includes(
-                    parsedUrl.protocol
-                )
-            ) {
-
-                errorBox.textContent =
-                    "URL must use HTTP or HTTPS.";
-
-                errorBox.style.display =
-                    "block";
-
-                return;
-            }
-
-
-            submitButton.disabled =
-                true;
-
-            submitButton.textContent =
-                "Adding...";
-
-
-            try {
-
-                const response =
-                    await fetch(
-                        `${API_URL}/api/apis`,
-                        {
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body:
-                                JSON.stringify({
-                                    name,
-                                    url
-                                })
-                        }
-                    );
-
-
-                const data =
-                    await response
-                        .json()
-                        .catch(
-                            () => ({})
-                        );
-
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        data.error ||
-                        data.message ||
-                        `Unable to add API (${response.status})`
-                    );
-                }
-
-
-                // Show success
-                successBox.textContent =
-                    "API added successfully.";
-
-                successBox.style.display =
-                    "block";
-
-
-                // Refresh dashboard
-                await loadDashboard();
-
-
-                // Close after short delay
-                setTimeout(
-                    closeModal,
-                    500
-                );
-
-
-            } catch (error) {
-
-                console.error(
-                    "Add API error:",
-                    error
-                );
-
-
-                errorBox.textContent =
-                    error.message ||
-                    "Failed to add API.";
-
-                errorBox.style.display =
-                    "block";
-
-            } finally {
-
-                submitButton.disabled =
-                    false;
-
-                submitButton.textContent =
-                    "Add API";
-            }
-        }
+    console.warn(
+        "Add API button not found."
     );
 }
 
 
-// ======================================================
-// SETUP ADD API BUTTON
-// ======================================================
+/* =====================================================
+   CHECK ALL BUTTON
+   ===================================================== */
 
-function setupAddApiButton() {
-
-    createAddApiModal();
-
-
-    let button =
-        document.getElementById(
-            "addApiBtn"
-        );
-
-
-    // If the button does not have
-    // addApiBtn as its ID, find it
-    // using its visible text.
-    if (!button) {
-
-        button =
-            Array.from(
-                document.querySelectorAll(
-                    "button, a"
-                )
-            ).find(
-                element =>
-                    element.textContent
-                        .trim()
-                        .toLowerCase()
-                        .includes(
-                            "add api"
-                        )
-            );
-    }
-
-
-    if (!button) {
-
-        console.warn(
-            "Add API button not found."
-        );
-
-        return;
-    }
-
-
-    button.addEventListener(
-        "click",
-        event => {
-
-            event.preventDefault();
-
-
-            const modal =
-                document.getElementById(
-                    "addApiModal"
-                );
-
-
-            modal.classList.add(
-                "open"
-            );
-
-
-            document
-                .getElementById(
-                    "addApiName"
-                )
-                .focus();
-        }
-    );
-}
-
-
-// ======================================================
-// HELPERS
-// ======================================================
-
-function formatTime(
-    timestamp
-) {
-
-    if (!timestamp) {
-        return "--";
-    }
-
-
-    return new Date(
-        timestamp
-    ).toLocaleTimeString(
-        [],
-        {
-            hour: "2-digit",
-            minute: "2-digit"
-        }
-    );
-}
-
-
-function escapeHtml(
-    value
-) {
-
-    const div =
-        document.createElement(
-            "div"
-        );
-
-
-    div.textContent =
-        value ?? "";
-
-
-    return div.innerHTML;
-}
-
-
-// ======================================================
-// INITIALIZE
-// ======================================================
-
-const checkButton =
-    document.getElementById(
-        "checkAllBtn"
-    );
-
+const checkButton = document.getElementById(
+    "checkAllBtn"
+);
 
 if (checkButton) {
 
@@ -1277,15 +753,44 @@ if (checkButton) {
 }
 
 
-// Setup Add API
-setupAddApiButton();
+/* =====================================================
+   HELPERS
+   ===================================================== */
+
+function formatTime(timestamp) {
+
+    if (!timestamp) return "--";
+
+    return new Date(timestamp).toLocaleTimeString(
+        [],
+        {
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
+}
 
 
-// Initial load
+function escapeHtml(value) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent = value ?? "";
+
+    return div.innerHTML;
+}
+
+
+/* =====================================================
+   INITIAL LOAD
+   ===================================================== */
+
 loadDashboard();
 
 
-// Refresh every 15 seconds
+/* Refresh every 15 seconds */
+
 setInterval(
     loadDashboard,
     15000
