@@ -9,10 +9,12 @@ zerops:
           npm ci
       deployFiles:
         - ./backend
+        - ./frontend
+        - ./worker
 
     run:
       base: alpine/nodejs@24
       ports:
         - port: 5000
-          httpSupport: true
+      httpSupport: true
       start: node backend/server.js
