@@ -1,0 +1,18 @@
+zerops:
+  - setup: nodejs
+
+    build:
+      base: alpine/nodejs@24
+      buildCommands:
+        - |
+          cd backend
+          npm ci
+      deployFiles:
+        - ./backend
+
+    run:
+      base: alpine/nodejs@24
+      ports:
+        - port: 5000
+          httpSupport: true
+      start: node backend/server.js
