@@ -6,7 +6,9 @@ require("dotenv").config();
 
 const app = express();
 
+// Middleware
 app.use(cors());
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend")));
 
 const PORT = process.env.PORT || 5000;
@@ -61,17 +63,31 @@ async function initializeDatabase() {
         console.log("PostgreSQL database initialized successfully");
 
     } catch (error) {
-        console.error("Database initialization failed:", error.message);
+        console.error(
+            "Database initialization failed:",
+            error.message
+        );
+
         process.exit(1);
     }
 }
 
-// Root endpoint
+
+// ======================================================
+// ROOT / FRONTEND
+// ======================================================
+
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/index.html"));
+    res.sendFile(
+        path.join(__dirname, "../frontend/index.html")
+    );
 });
 
-// Health check endpoint
+
+// ======================================================
+// HEALTH CHECK
+// ======================================================
+
 app.get("/api/health", (req, res) => {
     res.json({
         status: "healthy",
@@ -80,9 +96,15 @@ app.get("/api/health", (req, res) => {
     });
 });
 
-// Get all monitored APIs
+
+// ======================================================
+// GET ALL MONITORED APIS
+// ======================================================
+
 app.get("/api/apis", async (req, res) => {
+
     try {
+
         const result = await pool.query(`
             SELECT
                 id,
@@ -101,6 +123,7 @@ app.get("/api/apis", async (req, res) => {
         });
 
     } catch (error) {
+
         res.status(500).json({
             error: "Failed to fetch APIs",
             message: error.message
@@ -108,9 +131,15 @@ app.get("/api/apis", async (req, res) => {
     }
 });
 
-// Get incidents
+
+// ======================================================
+// GET INCIDENTS
+// ======================================================
+
 app.get("/api/incidents", async (req, res) => {
+
     try {
+
         const result = await pool.query(`
             SELECT
                 id,
@@ -130,6 +159,7 @@ app.get("/api/incidents", async (req, res) => {
         });
 
     } catch (error) {
+
         res.status(500).json({
             error: "Failed to fetch incidents",
             message: error.message
@@ -137,30 +167,56 @@ app.get("/api/incidents", async (req, res) => {
     }
 });
 
-// Add a new API
+
+// ======================================================
+// ADD NEW API
+// ======================================================
+
 app.post("/api/apis", async (req, res) => {
+
     const { name, url } = req.body;
 
+    // Validate name and URL
     if (!name || !url) {
+
         return res.status(400).json({
             error: "name and url are required"
         });
     }
 
-    try {
-        const parsedUrl = new URL(url);
+    const cleanName = String(name).trim();
+    const cleanUrl = String(url).trim();
 
-        if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+    if (!cleanName || !cleanUrl) {
+
+        return res.status(400).json({
+            error: "name and url are required"
+        });
+    }
+
+    // Validate URL
+    try {
+
+        const parsedUrl = new URL(cleanUrl);
+
+        if (
+            !["http:", "https:"].includes(
+                parsedUrl.protocol
+            )
+        ) {
             throw new Error("Invalid protocol");
         }
 
     } catch {
+
         return res.status(400).json({
             error: "Invalid URL"
         });
     }
 
+    // Insert into existing PostgreSQL table
     try {
+
         const result = await pool.query(
             `
             INSERT INTO apis (name, url)
@@ -173,7 +229,7 @@ app.post("/api/apis", async (req, res) => {
                 response_time AS "responseTime",
                 last_checked AS "lastChecked"
             `,
-            [name, url]
+            [cleanName, cleanUrl]
         );
 
         res.status(201).json({
@@ -183,11 +239,18 @@ app.post("/api/apis", async (req, res) => {
 
     } catch (error) {
 
+        // Duplicate URL
         if (error.code === "23505") {
+
             return res.status(409).json({
                 error: "API with this URL already exists"
             });
         }
+
+        console.error(
+            "Failed to add API:",
+            error.message
+        );
 
         res.status(500).json({
             error: "Failed to add API",
@@ -196,33 +259,47 @@ app.post("/api/apis", async (req, res) => {
     }
 });
 
-// Check one API
+
+// ======================================================
+// CHECK ONE API
+// ======================================================
+
 app.post("/api/check/:id", async (req, res) => {
+
     const id = Number(req.params.id);
 
     if (!Number.isInteger(id)) {
+
         return res.status(400).json({
             error: "Invalid API ID"
         });
     }
 
     try {
+
         const result = await pool.query(
-            `SELECT * FROM apis WHERE id = $1`,
+            `
+            SELECT *
+            FROM apis
+            WHERE id = $1
+            `,
             [id]
         );
 
         if (result.rows.length === 0) {
+
             return res.status(404).json({
                 error: "API not found"
             });
         }
 
-        const resultData = await checkApi(result.rows[0]);
+        const resultData =
+            await checkApi(result.rows[0]);
 
         res.json(resultData);
 
     } catch (error) {
+
         res.status(500).json({
             error: "Failed to check API",
             message: error.message
@@ -230,9 +307,15 @@ app.post("/api/check/:id", async (req, res) => {
     }
 });
 
-// Check all APIs
+
+// ======================================================
+// CHECK ALL APIS
+// ======================================================
+
 app.post("/api/check-all", async (req, res) => {
+
     try {
+
         const result = await pool.query(`
             SELECT *
             FROM apis
@@ -242,7 +325,10 @@ app.post("/api/check-all", async (req, res) => {
         const results = [];
 
         for (const api of result.rows) {
-            const checkResult = await checkApi(api);
+
+            const checkResult =
+                await checkApi(api);
+
             results.push(checkResult);
         }
 
@@ -252,6 +338,7 @@ app.post("/api/check-all", async (req, res) => {
         });
 
     } catch (error) {
+
         res.status(500).json({
             error: "Failed to check APIs",
             message: error.message
@@ -259,12 +346,19 @@ app.post("/api/check-all", async (req, res) => {
     }
 });
 
-// API monitoring function
+
+// ======================================================
+// API MONITORING FUNCTION
+// ======================================================
+
 async function checkApi(api) {
+
     const start = Date.now();
 
     try {
-        const controller = new AbortController();
+
+        const controller =
+            new AbortController();
 
         const timeout = setTimeout(() => {
             controller.abort();
@@ -277,11 +371,14 @@ async function checkApi(api) {
 
         clearTimeout(timeout);
 
-        const responseTime = Date.now() - start;
+        const responseTime =
+            Date.now() - start;
 
-        const newStatus = response.ok
-            ? "healthy"
-            : "down";
+        const newStatus =
+            response.ok
+                ? "healthy"
+                : "down";
+
 
         // Update API status
         await pool.query(
@@ -300,6 +397,7 @@ async function checkApi(api) {
             ]
         );
 
+
         // Create incident only when status changes
         if (api.status !== newStatus) {
 
@@ -313,9 +411,11 @@ async function checkApi(api) {
                 [
                     api.id,
                     api.name,
+
                     newStatus === "healthy"
                         ? "recovered"
                         : "down",
+
                     newStatus === "healthy"
                         ? "API recovered"
                         : `HTTP ${response.status}`
@@ -323,19 +423,31 @@ async function checkApi(api) {
             );
         }
 
+
         return {
+
             id: api.id,
+
             name: api.name,
+
             status: newStatus,
+
             responseTime: responseTime,
+
             httpStatus: response.status,
-            checkedAt: new Date().toISOString()
+
+            checkedAt:
+                new Date().toISOString()
         };
+
 
     } catch (error) {
 
-        const responseTime = Date.now() - start;
+        const responseTime =
+            Date.now() - start;
 
+
+        // Update API as down
         await pool.query(
             `
             UPDATE apis
@@ -351,7 +463,8 @@ async function checkApi(api) {
             ]
         );
 
-        // Create incident only if previous state wasn't already down
+
+        // Create incident only if it wasn't already down
         if (api.status !== "down") {
 
             await pool.query(
@@ -364,6 +477,7 @@ async function checkApi(api) {
                 [
                     api.id,
                     api.name,
+
                     error.name === "AbortError"
                         ? "Request timeout"
                         : error.message
@@ -371,29 +485,47 @@ async function checkApi(api) {
             );
         }
 
+
         return {
+
             id: api.id,
+
             name: api.name,
+
             status: "down",
+
             responseTime: responseTime,
+
             error:
                 error.name === "AbortError"
                     ? "Request timeout"
                     : error.message,
-            checkedAt: new Date().toISOString()
+
+            checkedAt:
+                new Date().toISOString()
         };
     }
 }
 
-// Start server
+
+// ======================================================
+// START SERVER
+// ======================================================
+
 async function startServer() {
+
     await initializeDatabase();
 
-    app.listen(PORT, "0.0.0.0", () => {
-        console.log(
-            `API Sentinel backend running on port ${PORT}`
-        );
-    });
+    app.listen(
+        PORT,
+        "0.0.0.0",
+        () => {
+
+            console.log(
+                `API Sentinel backend running on port ${PORT}`
+            );
+        }
+    );
 }
 
 startServer();
