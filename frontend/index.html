@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Sentinel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="navbar">
+    <div class="brand">
+        <div class="logo">⚡</div>
+        <div>
+            <h1>API Sentinel</h1>
+            <span>API Reliability Monitor</span>
+        </div>
+    </div>
+
+    <div class="status">
+        <span class="dot"></span>
+        System Operational
+    </div>
+</header>
+
+<main class="container">
+
+    <section class="hero">
+        <div>
+            <p class="eyebrow">REAL-TIME API MONITORING</p>
+            <h2>Know when your APIs<br>go down.</h2>
+            <p class="hero-text">
+                Monitor API health, detect failures and track incidents
+                from one simple dashboard.
+            </p>
+        </div>
+
+        <button id="checkAllBtn">Check All APIs</button>
+    </section>
+
+    <section class="stats">
+
+        <div class="stat-card">
+            <span>Total APIs</span>
+            <strong id="totalApis">3</strong>
+        </div>
+
+        <div class="stat-card">
+            <span>Healthy</span>
+            <strong class="green" id="healthyApis">2</strong>
+        </div>
+
+        <div class="stat-card">
+            <span>Down</span>
+            <strong class="red" id="downApis">1</strong>
+        </div>
+
+        <div class="stat-card">
+            <span>Incidents</span>
+            <strong id="incidentCount">2</strong>
+        </div>
+
+    </section>
+
+    <section class="section-header">
+        <div>
+            <h3>Monitored APIs</h3>
+            <p>Live health status of your endpoints</p>
+        </div>
+
+        <button id="addApiBtn" class="secondary-btn">
+            + Add API
+        </button>
+    </section>
+
+    <section id="apiList" class="api-list">
+
+        <div class="api-card">
+            <div class="api-info">
+                <div class="api-icon">🌐</div>
+                <div>
+                    <h4>Production API</h4>
+                    <p>https://api.example.com/health</p>
+                </div>
+            </div>
+
+            <div class="api-status healthy">
+                <span></span>
+                Healthy
+            </div>
+
+            <div class="response">
+                <strong>124ms</strong>
+                <small>Response</small>
+            </div>
+        </div>
+
+        <div class="api-card">
+            <div class="api-info">
+                <div class="api-icon">🔐</div>
+                <div>
+                    <h4>Authentication API</h4>
+                    <p>https://auth.example.com/health</p>
+                </div>
+            </div>
+
+            <div class="api-status healthy">
+                <span></span>
+                Healthy
+            </div>
+
+            <div class="response">
+                <strong>89ms</strong>
+                <small>Response</small>
+            </div>
+        </div>
+
+        <div class="api-card">
+            <div class="api-info">
+                <div class="api-icon">💳</div>
+                <div>
+                    <h4>Payment API</h4>
+                    <p>https://payments.example.com/health</p>
+                </div>
+            </div>
+
+            <div class="api-status down">
+                <span></span>
+                Down
+            </div>
+
+            <div class="response">
+                <strong>Timeout</strong>
+                <small>Response</small>
+            </div>
+        </div>
+
+    </section>
+
+    <section class="section-header incidents-header">
+        <div>
+            <h3>Recent Incidents</h3>
+            <p>Latest API failures detected by Sentinel</p>
+        </div>
+    </section>
+
+    <section class="incident-list">
+
+        <div class="incident">
+            <div class="incident-icon">!</div>
+            <div>
+                <strong>Payment API unavailable</strong>
+                <p>Connection timeout detected</p>
+            </div>
+            <span>12 min ago</span>
+        </div>
+
+        <div class="incident">
+            <div class="incident-icon">!</div>
+            <div>
+                <strong>Authentication API recovered</strong>
+                <p>Service returned HTTP 200</p>
+            </div>
+            <span>34 min ago</span>
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <p>API Sentinel • Built with Node.js & Zerops</p>
+</footer>
+
+<script src="app.js"></script>
+
+</body>
+</html>
