@@ -3,18 +3,19 @@ zerops:
 
     build:
       base: alpine/nodejs@24
+
       buildCommands:
         - |
           cd backend
           npm ci
-      deployFiles:
-        - ./backend
-        - ./frontend
-        - ./worker
+
+      deployFiles: .
 
     run:
       base: alpine/nodejs@24
+
       ports:
         - port: 5000
-      httpSupport: true
+          httpSupport: true
+
       start: node backend/server.js
