@@ -15,55 +15,35 @@ async function loadDashboard() {
                 fetch(`${API_URL}/api/incidents`)
             ]);
 
-        if (
-            !apisResponse.ok ||
-            !incidentsResponse.ok
-        ) {
-            throw new Error(
-                "Backend request failed"
-            );
+        if (!apisResponse.ok || !incidentsResponse.ok) {
+            throw new Error("Backend request failed");
         }
 
-        const apiData =
-            await apisResponse.json();
+        const apiData = await apisResponse.json();
+        const incidentData = await incidentsResponse.json();
 
-        const incidentData =
-            await incidentsResponse.json();
-
-        renderApis(
-            apiData.apis || []
-        );
-
-        renderIncidents(
-            incidentData.incidents || []
-        );
+        renderApis(apiData.apis || []);
+        renderIncidents(incidentData.incidents || []);
 
         updateStats(
             apiData.apis || [],
             incidentData.incidents || []
         );
 
-        const status =
-            document.querySelector(".status");
+        const status = document.querySelector(".status");
 
         if (status) {
-
             status.innerHTML =
                 `<span class="dot"></span> System Operational`;
         }
 
     } catch (error) {
 
-        console.error(
-            "Dashboard error:",
-            error
-        );
+        console.error("Dashboard error:", error);
 
-        const status =
-            document.querySelector(".status");
+        const status = document.querySelector(".status");
 
         if (status) {
-
             status.innerHTML =
                 `<span class="dot" style="background:#ff6262"></span> Backend Offline`;
         }
@@ -77,54 +57,33 @@ async function loadDashboard() {
 
 function updateStats(apis, incidents) {
 
-    const healthy =
-        apis.filter(
-            api => api.status === "healthy"
-        ).length;
+    const healthy = apis.filter(
+        api => api.status === "healthy"
+    ).length;
 
-    const down =
-        apis.filter(
-            api => api.status === "down"
-        ).length;
+    const down = apis.filter(
+        api => api.status === "down"
+    ).length;
 
-    const totalApis =
-        document.getElementById(
-            "totalApis"
-        );
-
-    const healthyApis =
-        document.getElementById(
-            "healthyApis"
-        );
-
-    const downApis =
-        document.getElementById(
-            "downApis"
-        );
-
-    const incidentCount =
-        document.getElementById(
-            "incidentCount"
-        );
+    const totalApis = document.getElementById("totalApis");
+    const healthyApis = document.getElementById("healthyApis");
+    const downApis = document.getElementById("downApis");
+    const incidentCount = document.getElementById("incidentCount");
 
     if (totalApis) {
-        totalApis.textContent =
-            apis.length;
+        totalApis.textContent = apis.length;
     }
 
     if (healthyApis) {
-        healthyApis.textContent =
-            healthy;
+        healthyApis.textContent = healthy;
     }
 
     if (downApis) {
-        downApis.textContent =
-            down;
+        downApis.textContent = down;
     }
 
     if (incidentCount) {
-        incidentCount.textContent =
-            incidents.length;
+        incidentCount.textContent = incidents.length;
     }
 }
 
@@ -135,10 +94,7 @@ function updateStats(apis, incidents) {
 
 function renderApis(apis) {
 
-    const apiList =
-        document.getElementById(
-            "apiList"
-        );
+    const apiList = document.getElementById("apiList");
 
     if (!apiList) return;
 
@@ -148,21 +104,12 @@ function renderApis(apis) {
 
         apiList.innerHTML = `
             <div class="incident">
-
-                <div class="incident-icon">
-                    !
-                </div>
+                <div class="incident-icon">!</div>
 
                 <div>
-                    <strong>
-                        No APIs configured
-                    </strong>
-
-                    <p>
-                        Add an API to start monitoring.
-                    </p>
+                    <strong>No APIs configured</strong>
+                    <p>Add an API to start monitoring.</p>
                 </div>
-
             </div>
         `;
 
@@ -192,16 +139,11 @@ function renderApis(apis) {
                 ? `${api.responseTime}ms`
                 : "--";
 
-        const card =
-            document.createElement(
-                "div"
-            );
+        const card = document.createElement("div");
 
-        card.className =
-            "api-card";
+        card.className = "api-card";
 
         card.innerHTML = `
-
             <div class="api-info">
 
                 <div class="api-icon">
@@ -209,7 +151,6 @@ function renderApis(apis) {
                 </div>
 
                 <div>
-
                     <h4>
                         ${escapeHtml(api.name)}
                     </h4>
@@ -217,33 +158,19 @@ function renderApis(apis) {
                     <p>
                         ${escapeHtml(api.url)}
                     </p>
-
                 </div>
 
             </div>
 
-
             <div class="api-status ${statusClass}">
-
                 <span></span>
-
                 ${statusText}
-
             </div>
-
 
             <div class="response">
-
-                <strong>
-                    ${response}
-                </strong>
-
-                <small>
-                    Response
-                </small>
-
+                <strong>${response}</strong>
+                <small>Response</small>
             </div>
-
 
             <button
                 class="remove-api-btn"
@@ -251,16 +178,13 @@ function renderApis(apis) {
             >
                 Remove
             </button>
-
         `;
 
 
-        /* Add Remove button event */
+        /* Remove button */
 
         const removeButton =
-            card.querySelector(
-                ".remove-api-btn"
-            );
+            card.querySelector(".remove-api-btn");
 
         if (removeButton) {
 
@@ -275,9 +199,7 @@ function renderApis(apis) {
             );
         }
 
-
         apiList.appendChild(card);
-
     });
 }
 
@@ -289,9 +211,7 @@ function renderApis(apis) {
 function renderIncidents(incidents) {
 
     const container =
-        document.querySelector(
-            ".incident-list"
-        );
+        document.querySelector(".incident-list");
 
     if (!container) return;
 
@@ -307,7 +227,6 @@ function renderIncidents(incidents) {
                 </div>
 
                 <div>
-
                     <strong>
                         No incidents detected
                     </strong>
@@ -315,7 +234,6 @@ function renderIncidents(incidents) {
                     <p>
                         All monitored APIs are operating normally.
                     </p>
-
                 </div>
 
             </div>
@@ -324,21 +242,16 @@ function renderIncidents(incidents) {
         return;
     }
 
-
     incidents
         .slice(0, 5)
         .forEach(incident => {
 
             const div =
-                document.createElement(
-                    "div"
-                );
+                document.createElement("div");
 
-            div.className =
-                "incident";
+            div.className = "incident";
 
             div.innerHTML = `
-
                 <div class="incident-icon">
                     !
                 </div>
@@ -364,13 +277,9 @@ function renderIncidents(incidents) {
                         incident.timestamp
                     )}
                 </span>
-
             `;
 
-            container.appendChild(
-                div
-            );
-
+            container.appendChild(div);
         });
 }
 
@@ -382,15 +291,11 @@ function renderIncidents(incidents) {
 async function checkAllApis() {
 
     const button =
-        document.getElementById(
-            "checkAllBtn"
-        );
+        document.getElementById("checkAllBtn");
 
     if (!button) return;
 
-    button.textContent =
-        "Checking...";
-
+    button.textContent = "Checking...";
     button.disabled = true;
 
     try {
@@ -404,10 +309,7 @@ async function checkAllApis() {
             );
 
         if (!response.ok) {
-
-            throw new Error(
-                "Check failed"
-            );
+            throw new Error("Check failed");
         }
 
         await loadDashboard();
@@ -448,7 +350,6 @@ async function removeApi(id, name) {
         return;
     }
 
-
     try {
 
         const response =
@@ -460,8 +361,34 @@ async function removeApi(id, name) {
             );
 
 
-        const data =
-            await response.json();
+        /*
+         * IMPORTANT:
+         * Do not directly use response.json().
+         *
+         * If the backend returns an HTML error page,
+         * response.json() causes:
+         *
+         * Unexpected token '<'
+         */
+
+        const responseText =
+            await response.text();
+
+        let data = {};
+
+        try {
+
+            if (responseText) {
+                data = JSON.parse(responseText);
+            }
+
+        } catch {
+
+            console.error(
+                "Remove API returned non-JSON response:",
+                responseText
+            );
+        }
 
 
         if (!response.ok) {
@@ -469,10 +396,14 @@ async function removeApi(id, name) {
             throw new Error(
                 data.error ||
                 data.message ||
-                "Failed to remove API"
+                `Failed to remove API (HTTP ${response.status})`
             );
         }
 
+
+        /*
+         * Reload dashboard after successful deletion
+         */
 
         await loadDashboard();
 
@@ -504,22 +435,15 @@ async function removeApi(id, name) {
 function createAddApiModal() {
 
     if (
-        document.getElementById(
-            "addApiModal"
-        )
+        document.getElementById("addApiModal")
     ) {
         return;
     }
 
-
     const modal =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
-    modal.id =
-        "addApiModal";
-
+    modal.id = "addApiModal";
 
     modal.innerHTML = `
 
@@ -540,7 +464,6 @@ function createAddApiModal() {
                         </p>
 
                     </div>
-
 
                     <button
                         type="button"
@@ -603,7 +526,6 @@ function createAddApiModal() {
                             Cancel
                         </button>
 
-
                         <button
                             type="submit"
                             id="submitAddApi"
@@ -619,22 +541,16 @@ function createAddApiModal() {
             </div>
 
         </div>
-
     `;
 
 
-    document.body.appendChild(
-        modal
-    );
-
+    document.body.appendChild(modal);
 
     addModalStyles();
 
 
     document
-        .getElementById(
-            "closeAddApi"
-        )
+        .getElementById("closeAddApi")
         .addEventListener(
             "click",
             closeAddApiModal
@@ -642,9 +558,7 @@ function createAddApiModal() {
 
 
     document
-        .getElementById(
-            "cancelAddApi"
-        )
+        .getElementById("cancelAddApi")
         .addEventListener(
             "click",
             closeAddApiModal
@@ -652,9 +566,7 @@ function createAddApiModal() {
 
 
     document
-        .getElementById(
-            "addApiForm"
-        )
+        .getElementById("addApiForm")
         .addEventListener(
             "submit",
             addApi
@@ -670,21 +582,15 @@ function openAddApiModal() {
 
     createAddApiModal();
 
-
     const modal =
         document.getElementById(
             "addApiModal"
         );
 
-
-    modal.style.display =
-        "flex";
-
+    modal.style.display = "flex";
 
     document
-        .getElementById(
-            "apiName"
-        )
+        .getElementById("apiName")
         .focus();
 }
 
@@ -702,31 +608,24 @@ function closeAddApiModal() {
 
     if (!modal) return;
 
-
-    modal.style.display =
-        "none";
-
+    modal.style.display = "none";
 
     const form =
         document.getElementById(
             "addApiForm"
         );
 
-
     if (form) {
         form.reset();
     }
-
 
     const error =
         document.getElementById(
             "addApiError"
         );
 
-
     if (error) {
-        error.textContent =
-            "";
+        error.textContent = "";
     }
 }
 
@@ -739,41 +638,26 @@ async function addApi(event) {
 
     event.preventDefault();
 
-
     const nameInput =
-        document.getElementById(
-            "apiName"
-        );
-
+        document.getElementById("apiName");
 
     const urlInput =
-        document.getElementById(
-            "apiUrl"
-        );
-
+        document.getElementById("apiUrl");
 
     const errorBox =
-        document.getElementById(
-            "addApiError"
-        );
-
+        document.getElementById("addApiError");
 
     const submitButton =
-        document.getElementById(
-            "submitAddApi"
-        );
-
+        document.getElementById("submitAddApi");
 
     const name =
         nameInput.value.trim();
-
 
     const url =
         urlInput.value.trim();
 
 
-    errorBox.textContent =
-        "";
+    errorBox.textContent = "";
 
 
     if (!name) {
@@ -800,7 +684,6 @@ async function addApi(event) {
 
     let validUrl;
 
-
     try {
 
         validUrl =
@@ -818,10 +701,8 @@ async function addApi(event) {
 
 
     if (
-        validUrl.protocol !==
-            "http:" &&
-        validUrl.protocol !==
-            "https:"
+        validUrl.protocol !== "http:" &&
+        validUrl.protocol !== "https:"
     ) {
 
         errorBox.textContent =
@@ -833,11 +714,8 @@ async function addApi(event) {
     }
 
 
-    submitButton.disabled =
-        true;
-
-    submitButton.textContent =
-        "Adding...";
+    submitButton.disabled = true;
+    submitButton.textContent = "Adding...";
 
 
     try {
@@ -861,8 +739,24 @@ async function addApi(event) {
             );
 
 
-        const data =
-            await response.json();
+        const responseText =
+            await response.text();
+
+        let data = {};
+
+        try {
+
+            if (responseText) {
+                data = JSON.parse(responseText);
+            }
+
+        } catch {
+
+            console.error(
+                "Add API returned non-JSON response:",
+                responseText
+            );
+        }
 
 
         if (!response.ok) {
@@ -870,16 +764,14 @@ async function addApi(event) {
             throw new Error(
                 data.error ||
                 data.message ||
-                "Failed to add API"
+                `Failed to add API (HTTP ${response.status})`
             );
         }
 
 
         closeAddApiModal();
 
-
         await loadDashboard();
-
 
         alert(
             "API added successfully!"
@@ -893,19 +785,14 @@ async function addApi(event) {
             error
         );
 
-
         errorBox.textContent =
             error.message ||
             "Unable to add API.";
 
-
     } finally {
 
-        submitButton.disabled =
-            false;
-
-        submitButton.textContent =
-            "Add API";
+        submitButton.disabled = false;
+        submitButton.textContent = "Add API";
     }
 }
 
@@ -926,10 +813,7 @@ function addModalStyles() {
 
 
     const style =
-        document.createElement(
-            "style"
-        );
-
+        document.createElement("style");
 
     style.id =
         "add-api-modal-styles";
@@ -961,7 +845,8 @@ function addModalStyles() {
             border: 1px solid #293246;
             border-radius: 16px;
             padding: 28px;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+            box-shadow:
+                0 25px 80px rgba(0, 0, 0, 0.6);
             color: #ffffff;
         }
 
@@ -1031,6 +916,7 @@ function addModalStyles() {
 
         .form-group input:focus {
             border-color: #2878ff;
+
             box-shadow:
                 0 0 0 2px
                 rgba(40, 120, 255, 0.15);
@@ -1097,24 +983,49 @@ function addModalStyles() {
         }
 
 
-        /* REMOVE API BUTTON */
+        /* =================================================
+           REMOVE API BUTTON
+           ================================================= */
 
         .remove-api-btn {
-            margin-left: 15px;
-            padding: 8px 12px;
-            border-radius: 7px;
-            border: 1px solid #5a2630;
-            background: #24151a;
-            color: #ff7272;
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: fit-content !important;
+
+            display: inline-flex !important;
+
+            align-items: center;
+            justify-content: center;
+
+            margin: 10px 0 0 15px;
+
+            padding: 7px 14px !important;
+
+            border-radius: 7px !important;
+
+            border:
+                1px solid #5a2630 !important;
+
+            background:
+                #24151a !important;
+
+            color:
+                #ff7272 !important;
+
             cursor: pointer;
-            font-size: 12px;
+
+            font-size: 12px !important;
+
             font-weight: 600;
+
+            line-height: 1.2;
         }
 
 
         .remove-api-btn:hover {
-            background: #351a21;
-            border-color: #ff6262;
+            background: #351a21 !important;
+            border-color: #ff6262 !important;
+            color: #ff8a8a !important;
         }
 
 
@@ -1126,9 +1037,7 @@ function addModalStyles() {
     `;
 
 
-    document.head.appendChild(
-        style
-    );
+    document.head.appendChild(style);
 }
 
 
@@ -1137,9 +1046,7 @@ function addModalStyles() {
    ===================================================== */
 
 const addApiButton =
-    document.querySelector(
-        "#addApiBtn"
-    );
+    document.querySelector("#addApiBtn");
 
 
 if (addApiButton) {
@@ -1186,7 +1093,6 @@ function formatTime(timestamp) {
         return "--";
     }
 
-
     return new Date(
         timestamp
     ).toLocaleTimeString(
@@ -1202,14 +1108,10 @@ function formatTime(timestamp) {
 function escapeHtml(value) {
 
     const div =
-        document.createElement(
-            "div"
-        );
-
+        document.createElement("div");
 
     div.textContent =
         value ?? "";
-
 
     return div.innerHTML;
 }
