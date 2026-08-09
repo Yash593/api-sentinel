@@ -1,40 +1,69 @@
 const API_URL = "https://nodejs-2dd9-5000.prg1.zerops.app";
 
-async function loadDashboard() {
-    try {
-        const [apisResponse, incidentsResponse] = await Promise.all([
-            fetch(`${API_URL}/api/apis`),
-            fetch(`${API_URL}/api/incidents`)
-        ]);
 
-        if (!apisResponse.ok || !incidentsResponse.ok) {
-            throw new Error("Backend request failed");
+/* =====================================================
+   LOAD DASHBOARD
+   ===================================================== */
+
+async function loadDashboard() {
+
+    try {
+
+        const [apisResponse, incidentsResponse] =
+            await Promise.all([
+                fetch(`${API_URL}/api/apis`),
+                fetch(`${API_URL}/api/incidents`)
+            ]);
+
+        if (
+            !apisResponse.ok ||
+            !incidentsResponse.ok
+        ) {
+            throw new Error(
+                "Backend request failed"
+            );
         }
 
-        const apiData = await apisResponse.json();
-        const incidentData = await incidentsResponse.json();
+        const apiData =
+            await apisResponse.json();
 
-        renderApis(apiData.apis || []);
-        renderIncidents(incidentData.incidents || []);
+        const incidentData =
+            await incidentsResponse.json();
+
+        renderApis(
+            apiData.apis || []
+        );
+
+        renderIncidents(
+            incidentData.incidents || []
+        );
 
         updateStats(
             apiData.apis || [],
             incidentData.incidents || []
         );
 
-        const status = document.querySelector(".status");
+        const status =
+            document.querySelector(".status");
 
         if (status) {
+
             status.innerHTML =
                 `<span class="dot"></span> System Operational`;
         }
 
     } catch (error) {
-        console.error("Dashboard error:", error);
 
-        const status = document.querySelector(".status");
+        console.error(
+            "Dashboard error:",
+            error
+        );
+
+        const status =
+            document.querySelector(".status");
 
         if (status) {
+
             status.innerHTML =
                 `<span class="dot" style="background:#ff6262"></span> Backend Offline`;
         }
@@ -42,42 +71,74 @@ async function loadDashboard() {
 }
 
 
+/* =====================================================
+   UPDATE DASHBOARD STATS
+   ===================================================== */
+
 function updateStats(apis, incidents) {
 
-    const healthy = apis.filter(
-        api => api.status === "healthy"
-    ).length;
+    const healthy =
+        apis.filter(
+            api => api.status === "healthy"
+        ).length;
 
-    const down = apis.filter(
-        api => api.status === "down"
-    ).length;
+    const down =
+        apis.filter(
+            api => api.status === "down"
+        ).length;
 
-    const totalApis = document.getElementById("totalApis");
-    const healthyApis = document.getElementById("healthyApis");
-    const downApis = document.getElementById("downApis");
-    const incidentCount = document.getElementById("incidentCount");
+    const totalApis =
+        document.getElementById(
+            "totalApis"
+        );
+
+    const healthyApis =
+        document.getElementById(
+            "healthyApis"
+        );
+
+    const downApis =
+        document.getElementById(
+            "downApis"
+        );
+
+    const incidentCount =
+        document.getElementById(
+            "incidentCount"
+        );
 
     if (totalApis) {
-        totalApis.textContent = apis.length;
+        totalApis.textContent =
+            apis.length;
     }
 
     if (healthyApis) {
-        healthyApis.textContent = healthy;
+        healthyApis.textContent =
+            healthy;
     }
 
     if (downApis) {
-        downApis.textContent = down;
+        downApis.textContent =
+            down;
     }
 
     if (incidentCount) {
-        incidentCount.textContent = incidents.length;
+        incidentCount.textContent =
+            incidents.length;
     }
 }
 
 
+/* =====================================================
+   RENDER MONITORED APIS
+   ===================================================== */
+
 function renderApis(apis) {
 
-    const apiList = document.getElementById("apiList");
+    const apiList =
+        document.getElementById(
+            "apiList"
+        );
 
     if (!apiList) return;
 
@@ -87,12 +148,21 @@ function renderApis(apis) {
 
         apiList.innerHTML = `
             <div class="incident">
-                <div class="incident-icon">!</div>
+
+                <div class="incident-icon">
+                    !
+                </div>
 
                 <div>
-                    <strong>No APIs configured</strong>
-                    <p>Add an API to start monitoring.</p>
+                    <strong>
+                        No APIs configured
+                    </strong>
+
+                    <p>
+                        Add an API to start monitoring.
+                    </p>
                 </div>
+
             </div>
         `;
 
@@ -104,7 +174,9 @@ function renderApis(apis) {
         const statusClass =
             api.status === "healthy"
                 ? "healthy"
-                : "down";
+                : api.status === "down"
+                    ? "down"
+                    : "unknown";
 
         const statusText =
             api.status === "healthy"
@@ -120,41 +192,106 @@ function renderApis(apis) {
                 ? `${api.responseTime}ms`
                 : "--";
 
-        const card = document.createElement("div");
+        const card =
+            document.createElement(
+                "div"
+            );
 
-        card.className = "api-card";
+        card.className =
+            "api-card";
 
         card.innerHTML = `
+
             <div class="api-info">
 
-                <div class="api-icon">🌐</div>
+                <div class="api-icon">
+                    🌐
+                </div>
 
                 <div>
-                    <h4>${escapeHtml(api.name)}</h4>
-                    <p>${escapeHtml(api.url)}</p>
+
+                    <h4>
+                        ${escapeHtml(api.name)}
+                    </h4>
+
+                    <p>
+                        ${escapeHtml(api.url)}
+                    </p>
+
                 </div>
 
             </div>
 
+
             <div class="api-status ${statusClass}">
+
                 <span></span>
+
                 ${statusText}
+
             </div>
+
 
             <div class="response">
-                <strong>${response}</strong>
-                <small>Response</small>
+
+                <strong>
+                    ${response}
+                </strong>
+
+                <small>
+                    Response
+                </small>
+
             </div>
+
+
+            <button
+                class="remove-api-btn"
+                type="button"
+            >
+                Remove
+            </button>
+
         `;
 
+
+        /* Add Remove button event */
+
+        const removeButton =
+            card.querySelector(
+                ".remove-api-btn"
+            );
+
+        if (removeButton) {
+
+            removeButton.addEventListener(
+                "click",
+                () => {
+                    removeApi(
+                        api.id,
+                        api.name
+                    );
+                }
+            );
+        }
+
+
         apiList.appendChild(card);
+
     });
 }
 
 
+/* =====================================================
+   RENDER INCIDENTS
+   ===================================================== */
+
 function renderIncidents(incidents) {
 
-    const container = document.querySelector(".incident-list");
+    const container =
+        document.querySelector(
+            ".incident-list"
+        );
 
     if (!container) return;
 
@@ -165,11 +302,20 @@ function renderIncidents(incidents) {
         container.innerHTML = `
             <div class="incident">
 
-                <div class="incident-icon">✓</div>
+                <div class="incident-icon">
+                    ✓
+                </div>
 
                 <div>
-                    <strong>No incidents detected</strong>
-                    <p>All monitored APIs are operating normally.</p>
+
+                    <strong>
+                        No incidents detected
+                    </strong>
+
+                    <p>
+                        All monitored APIs are operating normally.
+                    </p>
+
                 </div>
 
             </div>
@@ -178,62 +324,100 @@ function renderIncidents(incidents) {
         return;
     }
 
-    incidents.slice(0, 5).forEach(incident => {
 
-        const div = document.createElement("div");
+    incidents
+        .slice(0, 5)
+        .forEach(incident => {
 
-        div.className = "incident";
+            const div =
+                document.createElement(
+                    "div"
+                );
 
-        div.innerHTML = `
-            <div class="incident-icon">!</div>
+            div.className =
+                "incident";
 
-            <div>
-                <strong>
-                    ${escapeHtml(incident.apiName)}
-                </strong>
+            div.innerHTML = `
 
-                <p>
-                    ${escapeHtml(incident.message)}
-                </p>
-            </div>
+                <div class="incident-icon">
+                    !
+                </div>
 
-            <span>
-                ${formatTime(incident.timestamp)}
-            </span>
-        `;
+                <div>
 
-        container.appendChild(div);
-    });
+                    <strong>
+                        ${escapeHtml(
+                            incident.apiName
+                        )}
+                    </strong>
+
+                    <p>
+                        ${escapeHtml(
+                            incident.message
+                        )}
+                    </p>
+
+                </div>
+
+                <span>
+                    ${formatTime(
+                        incident.timestamp
+                    )}
+                </span>
+
+            `;
+
+            container.appendChild(
+                div
+            );
+
+        });
 }
 
 
+/* =====================================================
+   CHECK ALL APIS
+   ===================================================== */
+
 async function checkAllApis() {
 
-    const button = document.getElementById("checkAllBtn");
+    const button =
+        document.getElementById(
+            "checkAllBtn"
+        );
 
     if (!button) return;
 
-    button.textContent = "Checking...";
+    button.textContent =
+        "Checking...";
+
     button.disabled = true;
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/api/check-all`,
-            {
-                method: "POST"
-            }
-        );
+        const response =
+            await fetch(
+                `${API_URL}/api/check-all`,
+                {
+                    method: "POST"
+                }
+            );
 
         if (!response.ok) {
-            throw new Error("Check failed");
+
+            throw new Error(
+                "Check failed"
+            );
         }
 
         await loadDashboard();
 
     } catch (error) {
 
-        console.error("Check error:", error);
+        console.error(
+            "Check error:",
+            error
+        );
 
         alert(
             "Unable to contact API Sentinel backend."
@@ -241,27 +425,104 @@ async function checkAllApis() {
 
     } finally {
 
-        button.textContent = "Check All APIs";
+        button.textContent =
+            "Check All APIs";
+
         button.disabled = false;
     }
 }
 
 
 /* =====================================================
-   ADD API FEATURE
+   REMOVE API
+   ===================================================== */
+
+async function removeApi(id, name) {
+
+    const confirmed =
+        confirm(
+            `Are you sure you want to remove "${name}"?`
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/api/apis/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error ||
+                data.message ||
+                "Failed to remove API"
+            );
+        }
+
+
+        await loadDashboard();
+
+
+        alert(
+            `${name} removed successfully.`
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Remove API error:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Unable to remove API."
+        );
+    }
+}
+
+
+/* =====================================================
+   ADD API MODAL
    ===================================================== */
 
 function createAddApiModal() {
 
-    if (document.getElementById("addApiModal")) {
+    if (
+        document.getElementById(
+            "addApiModal"
+        )
+    ) {
         return;
     }
 
-    const modal = document.createElement("div");
 
-    modal.id = "addApiModal";
+    const modal =
+        document.createElement(
+            "div"
+        );
+
+    modal.id =
+        "addApiModal";
+
 
     modal.innerHTML = `
+
         <div class="add-api-overlay">
 
             <div class="add-api-modal">
@@ -269,9 +530,17 @@ function createAddApiModal() {
                 <div class="add-api-header">
 
                     <div>
-                        <h2>Add API</h2>
-                        <p>Add an API endpoint to monitor.</p>
+
+                        <h2>
+                            Add API
+                        </h2>
+
+                        <p>
+                            Add an API endpoint to monitor.
+                        </p>
+
                     </div>
+
 
                     <button
                         type="button"
@@ -282,6 +551,7 @@ function createAddApiModal() {
                     </button>
 
                 </div>
+
 
                 <form id="addApiForm">
 
@@ -300,6 +570,7 @@ function createAddApiModal() {
 
                     </div>
 
+
                     <div class="form-group">
 
                         <label for="apiUrl">
@@ -315,10 +586,12 @@ function createAddApiModal() {
 
                     </div>
 
+
                     <div
                         id="addApiError"
                         class="add-api-error"
                     ></div>
+
 
                     <div class="add-api-actions">
 
@@ -329,6 +602,7 @@ function createAddApiModal() {
                         >
                             Cancel
                         </button>
+
 
                         <button
                             type="submit"
@@ -345,28 +619,42 @@ function createAddApiModal() {
             </div>
 
         </div>
+
     `;
 
-    document.body.appendChild(modal);
+
+    document.body.appendChild(
+        modal
+    );
+
 
     addModalStyles();
 
+
     document
-        .getElementById("closeAddApi")
+        .getElementById(
+            "closeAddApi"
+        )
         .addEventListener(
             "click",
             closeAddApiModal
         );
 
+
     document
-        .getElementById("cancelAddApi")
+        .getElementById(
+            "cancelAddApi"
+        )
         .addEventListener(
             "click",
             closeAddApiModal
         );
 
+
     document
-        .getElementById("addApiForm")
+        .getElementById(
+            "addApiForm"
+        )
         .addEventListener(
             "submit",
             addApi
@@ -374,75 +662,119 @@ function createAddApiModal() {
 }
 
 
+/* =====================================================
+   OPEN ADD API MODAL
+   ===================================================== */
+
 function openAddApiModal() {
 
     createAddApiModal();
 
-    const modal = document.getElementById(
-        "addApiModal"
-    );
 
-    modal.style.display = "flex";
+    const modal =
+        document.getElementById(
+            "addApiModal"
+        );
+
+
+    modal.style.display =
+        "flex";
+
 
     document
-        .getElementById("apiName")
+        .getElementById(
+            "apiName"
+        )
         .focus();
 }
 
 
+/* =====================================================
+   CLOSE ADD API MODAL
+   ===================================================== */
+
 function closeAddApiModal() {
 
-    const modal = document.getElementById(
-        "addApiModal"
-    );
+    const modal =
+        document.getElementById(
+            "addApiModal"
+        );
 
     if (!modal) return;
 
-    modal.style.display = "none";
 
-    const form = document.getElementById(
-        "addApiForm"
-    );
+    modal.style.display =
+        "none";
+
+
+    const form =
+        document.getElementById(
+            "addApiForm"
+        );
+
 
     if (form) {
         form.reset();
     }
 
-    const error = document.getElementById(
-        "addApiError"
-    );
+
+    const error =
+        document.getElementById(
+            "addApiError"
+        );
+
 
     if (error) {
-        error.textContent = "";
+        error.textContent =
+            "";
     }
 }
 
+
+/* =====================================================
+   ADD API
+   ===================================================== */
 
 async function addApi(event) {
 
     event.preventDefault();
 
-    const nameInput = document.getElementById(
-        "apiName"
-    );
 
-    const urlInput = document.getElementById(
-        "apiUrl"
-    );
+    const nameInput =
+        document.getElementById(
+            "apiName"
+        );
 
-    const errorBox = document.getElementById(
-        "addApiError"
-    );
 
-    const submitButton = document.getElementById(
-        "submitAddApi"
-    );
+    const urlInput =
+        document.getElementById(
+            "apiUrl"
+        );
 
-    const name = nameInput.value.trim();
 
-    const url = urlInput.value.trim();
+    const errorBox =
+        document.getElementById(
+            "addApiError"
+        );
 
-    errorBox.textContent = "";
+
+    const submitButton =
+        document.getElementById(
+            "submitAddApi"
+        );
+
+
+    const name =
+        nameInput.value.trim();
+
+
+    const url =
+        urlInput.value.trim();
+
+
+    errorBox.textContent =
+        "";
+
 
     if (!name) {
 
@@ -454,6 +786,7 @@ async function addApi(event) {
         return;
     }
 
+
     if (!url) {
 
         errorBox.textContent =
@@ -464,11 +797,14 @@ async function addApi(event) {
         return;
     }
 
+
     let validUrl;
+
 
     try {
 
-        validUrl = new URL(url);
+        validUrl =
+            new URL(url);
 
     } catch {
 
@@ -480,9 +816,12 @@ async function addApi(event) {
         return;
     }
 
+
     if (
-        validUrl.protocol !== "http:" &&
-        validUrl.protocol !== "https:"
+        validUrl.protocol !==
+            "http:" &&
+        validUrl.protocol !==
+            "https:"
     ) {
 
         errorBox.textContent =
@@ -493,28 +832,38 @@ async function addApi(event) {
         return;
     }
 
-    submitButton.disabled = true;
-    submitButton.textContent = "Adding...";
+
+    submitButton.disabled =
+        true;
+
+    submitButton.textContent =
+        "Adding...";
+
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/api/apis`,
-            {
-                method: "POST",
+        const response =
+            await fetch(
+                `${API_URL}/api/apis`,
+                {
+                    method: "POST",
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                body: JSON.stringify({
-                    name: name,
-                    url: url
-                })
-            }
-        );
+                    body: JSON.stringify({
+                        name: name,
+                        url: url
+                    })
+                }
+            );
 
-        const data = await response.json();
+
+        const data =
+            await response.json();
+
 
         if (!response.ok) {
 
@@ -525,11 +874,17 @@ async function addApi(event) {
             );
         }
 
+
         closeAddApiModal();
+
 
         await loadDashboard();
 
-        alert("API added successfully!");
+
+        alert(
+            "API added successfully!"
+        );
+
 
     } catch (error) {
 
@@ -538,20 +893,25 @@ async function addApi(event) {
             error
         );
 
+
         errorBox.textContent =
             error.message ||
             "Unable to add API.";
 
+
     } finally {
 
-        submitButton.disabled = false;
-        submitButton.textContent = "Add API";
+        submitButton.disabled =
+            false;
+
+        submitButton.textContent =
+            "Add API";
     }
 }
 
 
 /* =====================================================
-   MODAL STYLING
+   MODAL + BUTTON STYLING
    ===================================================== */
 
 function addModalStyles() {
@@ -564,15 +924,23 @@ function addModalStyles() {
         return;
     }
 
-    const style = document.createElement("style");
 
-    style.id = "add-api-modal-styles";
+    const style =
+        document.createElement(
+            "style"
+        );
+
+
+    style.id =
+        "add-api-modal-styles";
+
 
     style.textContent = `
 
         #addApiModal {
             display: none;
         }
+
 
         .add-api-overlay {
             position: fixed;
@@ -585,6 +953,7 @@ function addModalStyles() {
             padding: 20px;
         }
 
+
         .add-api-modal {
             width: 100%;
             max-width: 500px;
@@ -596,6 +965,7 @@ function addModalStyles() {
             color: #ffffff;
         }
 
+
         .add-api-header {
             display: flex;
             justify-content: space-between;
@@ -603,16 +973,19 @@ function addModalStyles() {
             margin-bottom: 25px;
         }
 
+
         .add-api-header h2 {
             margin: 0 0 7px 0;
             font-size: 24px;
         }
+
 
         .add-api-header p {
             margin: 0;
             color: #8993a7;
             font-size: 14px;
         }
+
 
         .close-add-api {
             background: transparent;
@@ -623,13 +996,16 @@ function addModalStyles() {
             line-height: 1;
         }
 
+
         .close-add-api:hover {
             color: #ffffff;
         }
 
+
         .form-group {
             margin-bottom: 20px;
         }
+
 
         .form-group label {
             display: block;
@@ -638,6 +1014,7 @@ function addModalStyles() {
             font-weight: 600;
             color: #dce2ed;
         }
+
 
         .form-group input {
             width: 100%;
@@ -651,14 +1028,19 @@ function addModalStyles() {
             outline: none;
         }
 
+
         .form-group input:focus {
             border-color: #2878ff;
-            box-shadow: 0 0 0 2px rgba(40, 120, 255, 0.15);
+            box-shadow:
+                0 0 0 2px
+                rgba(40, 120, 255, 0.15);
         }
+
 
         .form-group input::placeholder {
             color: #667085;
         }
+
 
         .add-api-error {
             min-height: 20px;
@@ -667,11 +1049,13 @@ function addModalStyles() {
             font-size: 13px;
         }
 
+
         .add-api-actions {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
         }
+
 
         .cancel-api-btn,
         .submit-api-btn {
@@ -682,15 +1066,18 @@ function addModalStyles() {
             font-weight: 600;
         }
 
+
         .cancel-api-btn {
             background: #1a2130;
             border: 1px solid #30394c;
             color: #dce2ed;
         }
 
+
         .cancel-api-btn:hover {
             background: #242c3b;
         }
+
 
         .submit-api-btn {
             background: #2878ff;
@@ -698,18 +1085,50 @@ function addModalStyles() {
             color: white;
         }
 
+
         .submit-api-btn:hover {
             background: #1d67df;
         }
+
 
         .submit-api-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
 
+
+        /* REMOVE API BUTTON */
+
+        .remove-api-btn {
+            margin-left: 15px;
+            padding: 8px 12px;
+            border-radius: 7px;
+            border: 1px solid #5a2630;
+            background: #24151a;
+            color: #ff7272;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+
+        .remove-api-btn:hover {
+            background: #351a21;
+            border-color: #ff6262;
+        }
+
+
+        .remove-api-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
     `;
 
-    document.head.appendChild(style);
+
+    document.head.appendChild(
+        style
+    );
 }
 
 
@@ -717,9 +1136,11 @@ function addModalStyles() {
    ADD API BUTTON
    ===================================================== */
 
-const addApiButton = document.querySelector(
-    "#addApiBtn"
-);
+const addApiButton =
+    document.querySelector(
+        "#addApiBtn"
+    );
+
 
 if (addApiButton) {
 
@@ -740,9 +1161,11 @@ if (addApiButton) {
    CHECK ALL BUTTON
    ===================================================== */
 
-const checkButton = document.getElementById(
-    "checkAllBtn"
-);
+const checkButton =
+    document.getElementById(
+        "checkAllBtn"
+    );
+
 
 if (checkButton) {
 
@@ -759,9 +1182,14 @@ if (checkButton) {
 
 function formatTime(timestamp) {
 
-    if (!timestamp) return "--";
+    if (!timestamp) {
+        return "--";
+    }
 
-    return new Date(timestamp).toLocaleTimeString(
+
+    return new Date(
+        timestamp
+    ).toLocaleTimeString(
         [],
         {
             hour: "2-digit",
@@ -774,9 +1202,14 @@ function formatTime(timestamp) {
 function escapeHtml(value) {
 
     const div =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
-    div.textContent = value ?? "";
+
+    div.textContent =
+        value ?? "";
+
 
     return div.innerHTML;
 }
@@ -789,7 +1222,9 @@ function escapeHtml(value) {
 loadDashboard();
 
 
-/* Refresh every 15 seconds */
+/* =====================================================
+   AUTO REFRESH
+   ===================================================== */
 
 setInterval(
     loadDashboard,
